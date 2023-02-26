@@ -1,0 +1,36 @@
+
+pipeline {
+    agent any 
+    environment{
+        AWS_DEFAULT_REGION='us-east-1'
+    }
+    stages {
+        stage('Terraform init') {
+            steps {
+                sh '''
+                    /usr/local/bin/terraform version
+                    /usr/local/bin/tfenv list
+                    /usr/local/bin/tfenv use 1.3.1
+                    cd /Users/nrkodari/labs/devops/aws-projects/ec2-instance
+                    /usr/local/bin/terraform init
+                '''
+            }
+        }
+        stage('Terraform plan') {
+            steps {
+                sh '''
+                    cd /Users/nrkodari/labs/devops/aws-projects/ec2-instance
+                    /usr/local/bin/terraform plan
+                '''
+            }
+        }
+        stage('Terraform apply') {
+            steps {
+                sh '''
+                    cd /Users/nrkodari/labs/devops/aws-projects
+                    /usr/local/bin/terraform apply -auto-approve
+                '''
+            }
+        }
+    }  
+}
