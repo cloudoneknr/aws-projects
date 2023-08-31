@@ -1,0 +1,101 @@
+Resources:
+  cfnvpc:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: "10.0.0.0/16"
+      EnableDnsHostnames: "true"
+      EnableDnsSupport: "true"
+      InstanceTenancy: "default"
+      Tags: 
+        - Key: stack
+          Value: production
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: cfnvpc
+      CidrBlock: 10.0.0.0/20
+      MapPublicIpOnLaunch: "true"
+      AvailabilityZone: "us-east-1a"
+      Tags:
+      - Key: stack
+        Value: production
+      - Key: subnet-type
+        Value: public-subnet
+      - Key: Name
+        Value: cfn-public-subnet
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: cfnvpc
+      CidrBlock: "10.0.128.0/20"
+      AvailabilityZone: "us-east-1a"
+      Tags:
+        - Key: stack
+          Value: production
+        - Key: subnet-type
+          Value: PrivateSubnet
+        - Key: Name
+          Value: cfn-private-subnet
+  DBSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: cfnvpc
+      CidrBlock: "10.0.208.0/20"
+      AvailabilityZone: "us-east-1a"
+      Tags:
+        - Key: stack
+          Value: production
+        - Key: subnet-type
+          Value: PrivateSubnet
+        - Key: Name
+          Value: cfn-DB-subnet
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http to client host
+      VpcId:
+        Ref: cfnvpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  # NetworkAcl:
+  #   Type: AWS::EC2::NetworkAcl
+  #   Properties:
+  #     VpcId:
+  #       Ref: cfnvpc
+  #       Tags:
+  #        - Key: stack
+  #          Value: production
+  EIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  NATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt EIP.AllocationId
+      SubnetId: !Ref PublicSubnet
+      Tags:
+      - Key: stack
+        Value: production
+      - Key: Name
+        Value: NATGateway
+  RouteNATGateway:
+   DependsOn: NATGateway
+   Type: AWS::EC2::Route
+   Properties:
+      #RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: '0.0.0.0/0'
+      NatGatewayId: !Ref NATGateway
