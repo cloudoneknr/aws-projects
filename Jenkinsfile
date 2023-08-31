@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('build') {
             steps {
-                sh 'aws sts get-caller-identity'
+                sh '/usr/local/bin/aws sts get-caller-identity'
             }
         }
     }
